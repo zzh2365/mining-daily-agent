@@ -1,0 +1,34 @@
+[
+  {
+    "id": "fixture-1",
+    "source": "Mining News Fixture (Pilbara lithium case)",
+    "url": "https://example.com/pilbara-egno-pre-feasibility",
+    "title": "Pilbara Minerals advances Ngungaju and Egno lithium drive, flags spodumene market rebalancing",
+    "summary": "Pilbara Minerals said it is progressing the Egno lithium project near its Pilgangoora operation in the Pilbara, with a pre-feasibility study underway. The company pointed to a rebalancing spodumene market after a year of price weakness, with several high-cost converters in China cutting utilisation. Pilgangoora remains one of the largest hard-rock lithium operations globally, with NI 43-101 mineral resources dominated by Indicated and Inferred categories.",
+    "published_at": "2026-10-06T22:10:00.000Z"
+  },
+  {
+    "id": "fixture-2",
+    "source": "Mining News Fixture (Pilbara lithium case)",
+    "url": "https://example.com/spodumene-price-rebound-q4",
+    "title": "Spodumene prices edge higher on restocking, but analysts warn of 2027 supply response",
+    "summary": "Spot spodumene (6% Li2O) CIF China prices rebounded this week on restocking by Chinese lithium hydroxide producers ahead of Q4 EV battery output. Analysts cautioned that a sustained rally above USD 1,100/t could restart idled African and Australian supply, capping upside. Several houses now model a USD 900-1,200/t range for the next two quarters.",
+    "published_at": "2026-10-07T04:30:00.000Z"
+  },
+  {
+    "id": "fixture-3",
+    "source": "Mining News Fixture (Pilbara lithium case)",
+    "url": "https://example.com/altura-ramp-up-risk",
+    "title": "Risk watch: Pilbara lithium players face royalty, ERP and tailings-cost pressure",
+    "summary": "Western Australia's 5.1% ad valorem royalty for iron ore, plus rising energy-transition-minerals exploration levies, continue to lift the Pilbara cost base. Analysts also flagged tailings storage facility construction costs and Native Title heritage approvals as the two most common schedule risks for lithium projects in the region. Investors were urged to check NI 43-101 statements for reliance on Inferred resources in project economics.",
+    "published_at": "2026-10-07T09:15:00.000Z"
+  },
+  {
+    "id": "fixture-4",
+    "source": "Mining News Fixture (Pilbara lithium case)",
+    "url": "https://example.com/critical-minerals-strategy",
+    "title": "Governments tighten critical-minerals stockpiling; lithium framed as strategic asset",
+    "summary": "Australia and the EU announced complementary critical-minerals stockpiling and processing-support measures this week. Policy analysts say strategic-stockpile demand could add a price floor for lithium chemical feedstock, while permitting reform timelines remain the key execution risk for new Pilbara developments.",
+    "published_at": "2026-10-08T01:05:00.000Z"
+  }
+]

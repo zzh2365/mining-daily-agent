@@ -1,0 +1,74 @@
+# One compose file for the whole system: three MCP servers kept alive as
+# healthchecked services, plus a one-shot agent run that writes the briefing.
+name: mining-daily-agent
+
+x-base: &base
+  build: .
+  restart: "no"
+  environment:
+    NEWS_MODE: ${NEWS_MODE:-auto}
+    PRICE_API_URL: ${PRICE_API_URL:-}
+    # LLM ReAct mode (leave unset for the deterministic planner):
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+    LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+  volumes:
+    - ./agent/output:/app/agent/output
+
+services:
+  mining-news-mcp:
+    <<: *base
+    command: ["node", "servers/mining-news-mcp/src/index.mjs"]
+    healthcheck:
+      test: ["CMD", "node", "scripts/validate-mcp.mjs", "mining-news-mcp"]
+      interval: 60s
+      timeout: 90s
+      retries: 3
+      start_period: 10s
+
+  mineral-pdf-mcp:
+    <<: *base
+    command: ["node", "servers/mineral-pdf-mcp/src/index.mjs"]
+    healthcheck:
+      test: ["CMD", "node", "scripts/validate-mcp.mjs", "mineral-pdf-mcp"]
+      interval: 60s
+      timeout: 90s
+      retries: 3
+      start_period: 10s
+
+  lime-price-mcp:
+    <<: *base
+    command: ["node", "servers/lime-price-mcp/src/index.mjs"]
+    healthcheck:
+      test: ["CMD", "node", "scripts/validate-mcp.mjs", "lime-price-mcp"]
+      interval: 60s
+      timeout: 90s
+      retries: 3
+      start_period: 10s
+
+  # One-shot briefing. Override the prompt with:
+  #   docker compose run --rm agent node agent/src/index.mjs --query "your ask"
+  #   AGENT_QUERY="氢氧化锂 风险" docker compose run --rm agent
+  agent:
+    <<: *base
+    environment:
+      NEWS_MODE: ${NEWS_MODE:-auto}
+      PRICE_API_URL: ${PRICE_API_URL:-}
+      AGENT_QUERY: ${AGENT_QUERY:-Pilbara lithium daily briefing}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+    depends_on:
+      mining-news-mcp:
+        condition: service_started
+      mineral-pdf-mcp:
+        condition: service_started
+      lime-price-mcp:
+        condition: service_started
+    command:
+      - node
+      - agent/src/index.mjs
+      - --query
+      - ${AGENT_QUERY:-Pilbara lithium daily briefing}
+      - --out
+      - agent/output/pilbara-report.md

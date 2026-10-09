@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>矿权日报 Agent · MCP 交付展示</title>
+<style>
+  :root{
+    --bg:#0f1729;--panel:#182032;--panel2:#1f2a40;--ink:#e6ecf7;--muted:#8b9bb8;
+    --line:#2a3752;--gold:#c9a24b;--gold2:#e6c877;--live:#3fb984;--demo:#c98a3f;--synth:#5b8def;
+    --pass:#3fb984;--fail:#e5544b;--chip:#22304a;--mono:ui-monospace,"SF Mono",Cascadia,"JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0c1322,#0f1729 40%);color:var(--ink);
+    font:16px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+  a{color:var(--gold2);text-decoration:none}a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px}
+  header.hero{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+  .eyebrow{color:var(--gold);font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+  h1{font-size:38px;margin:12px 0 8px;font-weight:800;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:16px;max-width:70ch}
+  .statbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:110px}
+  .stat b{display:block;font-size:22px;font-family:var(--mono);color:var(--gold2)}
+  .stat span{font-size:12px;color:var(--muted)}
+  nav.tabs{position:sticky;top:0;z-index:20;background:rgba(15,23,41,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);margin:0 -22px 34px;padding:0 22px;display:flex;gap:4px;overflow-x:auto}
+  nav.tabs button{background:none;border:0;color:var(--muted);font:inherit;font-size:14px;padding:15px 16px;cursor:pointer;
+    border-bottom:2px solid transparent;white-space:nowrap}
+  nav.tabs button.on{color:var(--ink);border-bottom-color:var(--gold)}
+  section{display:none;animation:fade .3s ease}section.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2{font-size:26px;margin:6px 0 18px}h3{font-size:19px;margin:26px 0 10px;color:var(--gold2)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--mono);padding:3px 10px;border-radius:99px;border:1px solid var(--line)}
+  .tag.live{color:var(--live);border-color:#2c5c48;background:#173027}
+  .tag.demo{color:var(--demo);border-color:#5c4526;background:#2c2114}
+  .tag.synth{color:var(--synth);border-color:#2c4270;background:#18233b}
+  .tag.pass{color:var(--pass);border-color:#2c5c48;background:#173027}
+  .arch{display:grid;grid-template-columns:1fr;gap:16px}
+  .flow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;flex:1;min-width:180px}
+  .node .role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)}
+  .node .name{font-weight:700;font-size:15px;margin-top:3px}
+  .node.core{border-color:var(--gold);background:linear-gradient(180deg,#241f14,#1f2a40)}
+  .arrow{color:var(--gold);font-size:22px;flex:0}
+  .srvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .srv{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .srv h4{margin:0 0 4px;font-size:15px;font-family:var(--mono);color:var(--gold2)}
+  .srv p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+  .tools{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
+  .tools li{font-family:var(--mono);font-size:12.5px;background:var(--chip);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+  .tools li em{color:var(--gold2);font-style:normal}
+  .md{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 30px}
+  .md h1{font-size:26px;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .md h2{font-size:20px;margin-top:30px;color:var(--gold2);border-left:3px solid var(--gold);padding-left:11px}
+  .md h3{font-size:16px}
+  .md table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto}
+  .md th,.md td{border:1px solid var(--line);padding:7px 11px;text-align:left}
+  .md th{background:var(--panel2);color:var(--gold2)}
+  .md tr:nth-child(even) td{background:#1b2437}
+  .md blockquote{border-left:3px solid var(--line);margin:12px 0;padding:4px 16px;color:var(--muted)}
+  .md code{font-family:var(--mono);background:#0d1424;padding:2px 6px;border-radius:5px;font-size:13px}
+  .md pre{background:#0d1424;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto}
+  .md pre code{background:none;padding:0}
+  .md ul,.md ol{padding-left:24px}.md li{margin:5px 0}
+  .md hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+  .md sub{color:var(--muted);font-family:var(--mono);font-size:11px}
+  table.grid{border-collapse:collapse;width:100%;font-size:13.5px}
+  table.grid th,table.grid td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  table.grid th{background:var(--panel2);color:var(--gold2);font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .st{font-family:var(--mono);font-weight:700}.st.PASS{color:var(--pass)}.st.FAIL{color:var(--fail)}
+  .mono{font-family:var(--mono)}
+  .trace td{font-family:var(--mono);font-size:12.5px}
+  .bar{height:7px;border-radius:4px;background:var(--line);position:relative;min-width:60px;display:inline-block;width:80px;vertical-align:middle;margin-right:6px}
+  .bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--gold)}
+  .cmd{background:#0d1424;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:13px;position:relative;overflow-x:auto;margin:12px 0}
+  .cmd b{color:var(--gold2)}.cmd .c{color:var(--muted)}
+  .cmd pre{margin:0;white-space:pre-wrap}
+  .copy{position:absolute;right:8px;top:8px;background:var(--chip);border:1px solid var(--line);color:var(--muted);
+    font:inherit;font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer}
+  .copy:hover{color:var(--ink)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:5px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  footer{color:var(--muted);font-size:12.5px;text-align:center;padding:34px 0;border-top:1px solid var(--line);margin-top:40px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">Model Context Protocol · 24h Build</div>
+  <h1>矿权日报 Agent</h1>
+  <p class="sub">3 个 MCP server + 1 个 Agent client，输入一句「Pilbara 锂矿今日简报」，经真实 stdio 工具调用产出一份带引用源的 Markdown 简报。本页由最新一次 demo 运行离线生成，可直接双击打开。</p>
+  <div class="statbar" id="statbar"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-t="arch" class="on">架构与编排</button>
+  <button data-t="report">简报正文</button>
+  <button data-t="valid">协议校验 · 调用轨迹</button>
+  <button data-t="contract">工具契约 · 上手</button>
+</nav>
+
+<section id="arch" class="on">
+  <h2>系统架构</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="node" style="max-width:150px;flex:0 0 130px"><div class="role">Input</div><div class="name">一句请求</div></div>
+      <div class="arrow">→</div>
+      <div class="node core"><div class="role">MCP Client · agent/src</div><div class="name">ReAct 循环 / 确定性 planner</div></div>
+      <div class="arrow">→</div>
+      <div class="node" style="max-width:170px;flex:0 0 150px"><div class="role">Output</div><div class="name">Markdown 简报 + 引用源</div></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--live)"></i>ReAct：配 API key 时模型自选工具与轮次</span>
+      <span><i class="dot" style="background:var(--gold)"></i>确定性 planner：无模型也能跑完，结果可复现</span>
+    </div>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:0">Client 通过 <b class="mono">McpHub</b> 用 stdio 拉起每个 server（initialize → tools/list → tools/call），把工具目录喂给编排层；所有数字仅来自工具返回值，LLM 只做证据挑选与文字撰写。本次运行编排模式：<span class="mono" id="mode"></span></p>
+  </div>
+
+  <h3>三个 MCP Server · 五个工具</h3>
+  <div class="srvgrid">
+    <div class="srv">
+      <h4>mining-news-mcp</h4>
+      <span class="tag live">● 实时 RSS</span>
+      <p>聚合 mining.com / australianmining.com.au，30 分钟磁盘缓存，断网降级到本地 fixture。</p>
+      <ul class="tools">
+        <li><em>search</em>(query, days, limit)</li>
+        <li><em>fetch_article</em>(url, max_chars)</li>
+      </ul>
+    </div>
+    <div class="srv">
+      <h4>mineral-pdf-mcp</h4>
+      <span class="tag demo">◐ 真实解析 + 合成样例</span>
+      <p>pdfjs-dist 抽文本层，NI 43-101 启发式解析表格式与叙述式资源量披露。</p>
+      <ul class="tools">
+        <li><em>extract_resources</em>(pdf_url, max_pages)</li>
+      </ul>
+    </div>
+    <div class="srv">
+      <h4>lime-price-mcp</h4>
+      <span class="tag synth">○ 确定性合成序列</span>
+      <p>按 品种+日期 播种、可复现；设 PRICE_API_URL 即零改动切授权行情源。</p>
+      <ul class="tools">
+        <li><em>get_price</em>(commodity, date)</li>
+        <li><em>get_trend</em>(commodity, days)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="report">
+  <h2>生成的简报正文</h2>
+  <p class="sub" style="margin-bottom:14px">固定五节：新闻摘要 → NI 43-101 资源量 → 价格走势 → 风险提示 → 引用源，附工具调用轨迹。下方为 <span class="mono">agent/output/pilbara-report.md</span> 的原文渲染。</p>
+  <div class="md" id="md"></div>
+</section>
+
+<section id="valid">
+  <h2>协议校验结果</h2>
+  <p class="sub" style="margin-bottom:14px"><span class="mono">scripts/validate-mcp.mjs</span> 用真实 MCP stdio 客户端逐个拉起 server，跑 initialize → tools/list → tools/call 并断言返回值。</p>
+  <div class="card" id="validcard"></div>
+
+  <h2 style="margin-top:34px">工具调用轨迹</h2>
+  <p class="sub" style="margin-bottom:14px">本次 demo 的 <span class="mono" id="tracecount"></span> 次调用，逐条对应简报中的数字来源。</p>
+  <div class="card" id="tracecard"></div>
+</section>
+
+<section id="contract">
+  <h2>工具契约</h2>
+  <div class="card" id="contractcard"></div>
+  <h3 style="margin-top:30px">5 分钟跑起来</h3>
+  <div class="cmd" id="quick"></div>
+  <h3>常用变体</h3>
+  <div class="cmd" id="variants"></div>
+</section>
+
+<footer id="foot"></footer>
+</div>
+
+<script type="application/json" id="data">{"builtAt":"2026-10-09T07:37:33.863Z","reportMd":"# 矿权日报 · Pilbara lithium daily briefing\n\n> 生成时间 2026-10-09 07:31 UTC · 编排模式 `deterministic-planner` · 工具调用 9 次 · 数据源 8 个\n\n## 一、新闻摘要\n\n- **CleanTech Lithium expands foothold in Argentina**（MINING.com, 2026-10-08）：The acquisition gives CleanTech a foothold in what it describes as Argentina’s largest undeveloped salt flat, with potential to share infrastructure and processing facilities across its regional lithium projects.\n- **UK scientists turn to biology to unlock cleaner lithium**（MINING.com, 2026-10-08）：Researchers at the University of Birmingham are leading a £6.2-million ($8.2-million) project to develop protein-based membranes that could make lithium extraction more selective and potentially less energy-intensive.\n- **Sigma Lithium stock jumps as Brazil court clears Grota mine restart**（MINING.com, 2026-10-07）：Sigma Lithium (NASDAQ: SGML) (ASX: SAU) (TSX-V: SGML) shares jumped 5.9% in New York pre-market trading Wednesday after a Brazilian appeals court upheld environmental licences for its flagship Grota do Cirilo lithium mine, clearing the company to resume mining and processing operations.\n\n**已抓取全文的文章**\n\n1. [CleanTech Lithium expands foothold in Argentina](https://www.mining.com/cleantech-lithium-expands-foothold-in-argentina/) — 抓取 2600 字符\n2. [UK scientists turn to biology to unlock cleaner lithium](https://www.mining.com/uk-scientists-turn-to-biology-to-unlock-cleaner-lithium/) — 抓取 4000 字符\n3. [Sigma Lithium stock jumps as Brazil court clears Grota mine restart](https://www.mining.com/sigma-lithium-jumps-as-brazil-court-clears-grota-mine-restart/) — 抓取 2069 字符\n\n## 二、NI 43-101 资源量数据\n\n**项目**：Pilgangoora Lithium Tantalite Project, Pilbara, Western Australia · **生效日期**：30 June 2026 · **QP**：J. Whitmore, P.Geo. · **阶段**：prefeasibility · **NI 43-101 引用**：是\n\n| 资源量类别 | 矿石量 (Mt) | 品位 | 金属量 (kt LCE) | 备注 |\n|---|---|---|---|---|\n| Measured | 18.4 Mt | 1.28% | 235 kt | — |\n| Indicated | 132.6 Mt | 1.21% | 1432 kt | — |\n| Inferred | 74.9 Mt | 1.16% | 702 kt | — |\n| **M + I (报告值)** | 151 Mt | 1.22% | 1667 kt | 报告合并披露 |\n\n> 解析置信度 high；已解析类别 Measured/Indicated/Inferred。Inferred 占比 33%。\n\n## 三、价格走势\n\n| 品种 | 最新报价 | 单位 | 贸易条款 | 日期 | 前收 | 日变动 |\n|---|---|---|---|---|---|---|\n| Spodumene concentrate SC6.0 | 804.56 | USD/t | CIF China | 2026-10-09 | 837.62 | -4.0% |\n| Lithium hydroxide (battery grade) | 10321.66 | USD/t | CIF China | 2026-10-09 | 9655.47 | +6.9% |\n\n**Spodumene concentrate SC6.0** — 2026-09-10 → 2026-10-09：-4.4%（down），均值 818.86 USD/t，区间 769.19–863.2，变异系数 2.83%，上涨/下跌天数 12/17。\n\n```\n▆▇▅▅▆▄█▄▇▆▃▇▅▄▄▃▄▇▆▄▃▅▁▆▁▅▂▂▆▄\n```\n\n| 日期 | 价格 |\n|---|---|\n| 2026-09-10 | 841.21 |\n| 2026-09-13 | 824.94 |\n| 2026-09-16 | 863.2 |\n| 2026-09-19 | 834.81 |\n| 2026-09-22 | 820.28 |\n| 2026-09-25 | 799.37 |\n| 2026-09-28 | 842.77 |\n| 2026-10-01 | 820.63 |\n| 2026-10-04 | 769.19 |\n| 2026-10-07 | 782.17 |\n| 2026-10-09 | 804.56 |\n\n**Lithium hydroxide (battery grade)** — 2026-09-10 → 2026-10-09：+4.3%（up），均值 9998.22 USD/t，区间 9408.66–10753.99，变异系数 2.92%，上涨/下跌天数 12/17。\n\n```\n▄▄▆▅▅▃█▆▄▄▄▂▄▃▂▅▃▁▄▅▅▆▄▃▁▃▆▅▂▆\n```\n\n| 日期 | 价格 |\n|---|---|\n| 2026-09-10 | 9890.96 |\n| 2026-09-13 | 10179.87 |\n| 2026-09-16 | 10753.99 |\n| 2026-09-19 | 9942.99 |\n| 2026-09-22 | 9905.74 |\n| 2026-09-25 | 10127.73 |\n| 2026-09-28 | 9934.19 |\n| 2026-10-01 | 10321.59 |\n| 2026-10-04 | 9414.48 |\n| 2026-10-07 | 10218.35 |\n| 2026-10-09 | 10321.66 |\n\n> Spodumene concentrate SC6.0：-4.4%（down），区间 769.19–863.2 USD/t；Lithium hydroxide (battery grade)：+4.3%（up），区间 9408.66–10753.99 USD/t\n\n## 四、风险提示\n\n- 🟠 Qualified-person caution：The Qualified Person cautions that Inferred Mineral Resources are too uncertain to apply economic and technical factors reliably.  \n  \u003csub>来源：pilbara_ni43101_sample.pdf\u003c/sub>\n- 🟠 Inferred 占总资源量 33%（NI 43-101 规定 Inferred 的品位与吨位不得用于可行性结论）  \n  \u003csub>来源：mineral-pdf-mcp\u003c/sub>\n- 🟡 Permitting / schedule / cost risk mentioned：Mining lease, Native Title approvals and a 5-year environmental permitting window remain outstanding.  \n  \u003csub>来源：pilbara_ni43101_sample.pdf\u003c/sub>\n- 🟡 Permitting / schedule / cost risk mentioned：There is a risk of cost overrun on tailings storage.  \n  \u003csub>来源：pilbara_ni43101_sample.pdf\u003c/sub>\n- 🟡 新闻中出现风险/不确定性表述  \n  \u003csub>来源：mining-news-mcp\u003c/sub>\n- 🟡 存在审批/社区/环保前置条件  \n  \u003csub>来源：mining-news-mcp\u003c/sub>\n- ⚪ 本次运行包含离线演示数据（fixture / example.com 链接），不构成真实市场信息  \n  \u003csub>来源：data-quality\u003c/sub>\n\n## 五、引用源\n\n- [新闻] [CleanTech Lithium expands foothold in Argentina](https://www.mining.com/cleantech-lithium-expands-foothold-in-argentina/) — 2026-10-08\n- [新闻] [UK scientists turn to biology to unlock cleaner lithium](https://www.mining.com/uk-scientists-turn-to-biology-to-unlock-cleaner-lithium/) — 2026-10-08\n- [新闻] [Sigma Lithium stock jumps as Brazil court clears Grota mine restart](https://www.mining.com/sigma-lithium-jumps-as-brazil-court-clears-grota-mine-restart/) — 2026-10-07\n- [新闻(仅摘要)] [Surge Battery boosts returns, cuts costs for Nevada lithium project](https://www.mining.com/surge-battery-boosts-returns-cuts-costs-for-nevada-lithium-project/) — 2026-10-05\n- [新闻(仅摘要)] [Renascor hits battery-grade purity at Adelaide plant](https://www.australianmining.com.au/renascor-hits-battery-grade-purity-at-adelaide-plant/) — 2026-10-09\n- [PDF] [Pilgangoora Lithium Tantalite Project, Pilbara, Western Australia — pilbara_ni43101_sample.pdf](file:///app/fixtures/pdfs/pilbara_ni43101_sample.pdf) — 30 June 2026\n- [价格] Spodumene concentrate SC6.0 价格走势（deterministic_series） — 2026-09-10 → 2026-10-09\n- [价格] Lithium hydroxide (battery grade) 价格走势（deterministic_series） — 2026-09-10 → 2026-10-09\n\n## 附录 · 工具调用轨迹\n\n| # | 工具 | 参数 | 结果 | 耗时 |\n|---|---|---|---|---|\n| 1 | `mining-news-mcp.search` | `{\"query\":\"Pilbara lithium daily lithium\",\"days\":7,\"limit\":8}` | ✅ | 2734ms |\n| 2 | `mining-news-mcp.fetch_article` | `{\"url\":\"https://www.mining.com/cleantech-lithium-expands-foothold-in-argentina/\"}` | ✅ | 859ms |\n| 3 | `mining-news-mcp.fetch_article` | `{\"url\":\"https://www.mining.com/uk-scientists-turn-to-biology-to-unlock-cleaner-lithium/\"}` | ✅ | 635ms |\n| 4 | `mining-news-mcp.fetch_article` | `{\"url\":\"https://www.mining.com/sigma-lithium-jumps-as-brazil-court-clears-grota-mine-resta` | ✅ | 646ms |\n| 5 | `mineral-pdf-mcp.extract_resources` | `{\"pdf_url\":\"fixture:pilbara_ni43101_sample\"}` | ✅ | 253ms |\n| 6 | `lime-price-mcp.get_price` | `{\"commodity\":\"spodumene_6pct\"}` | ✅ | 3ms |\n| 7 | `lime-price-mcp.get_trend` | `{\"commodity\":\"spodumene_6pct\",\"days\":30}` | ✅ | 12ms |\n| 8 | `lime-price-mcp.get_price` | `{\"commodity\":\"lithium_hydroxide_cif\"}` | ✅ | 0ms |\n| 9 | `lime-price-mcp.get_trend` | `{\"commodity\":\"lithium_hydroxide_cif\",\"days\":30}` | ✅ | 1ms |\n\n---\n\n_数据说明：Deterministic synthetic series seeded by commodity+date (reproducible demo data). Set PRICE_API_URL to plug in a licensed feed._\n\n_由 mining-daily-agent 生成；LLM 仅用于摘要与解读，所有数字均来自 MCP 工具返回值。_","evidence":{"mode":"deterministic-planner","query":"Pilbara lithium daily briefing","search_query":"Pilbara lithium daily lithium","intent":{"ids":["spodumene_6pct","lithium_hydroxide_cif"],"regions":["Pilbara"],"english":["Pilbara","lithium","daily","briefing"],"cjk":[],"keywords":["Pilbara","lithium","daily","briefing"]},"news_results":[{"title":"CleanTech Lithium expands foothold in Argentina","url":"https://www.mining.com/cleantech-lithium-expands-foothold-in-argentina/","source":"MINING.com","published_at":"2026-10-08T12:03:00.000Z","relevance":4,"summary":"New lithium brine properties near Laguna Verde offer growth potential as the developer targets exploration in 2027."},{"title":"UK scientists turn to biology to unlock cleaner lithium","url":"https://www.mining.com/uk-scientists-turn-to-biology-to-unlock-cleaner-lithium/","source":"MINING.com","published_at":"2026-10-08T12:49:00.000Z","relevance":3,"summary":"The project aims to separate battery metals using engineered proteins with precisely controlled pores."},{"title":"Sigma Lithium stock jumps as Brazil court clears Grota mine restart","url":"https://www.mining.com/sigma-lithium-jumps-as-brazil-court-clears-grota-mine-restart/","source":"MINING.com","published_at":"2026-10-07T10:47:00.000Z","relevance":3,"summary":"Appeals court lifted a September emergency order, allowing Grota do Cirilo’s restart as Sigma aims for major production boost."},{"title":"Surge Battery boosts returns, cuts costs for Nevada lithium project","url":"https://www.mining.com/surge-battery-boosts-returns-cuts-costs-for-nevada-lithium-project/","source":"MINING.com","published_at":"2026-10-05T15:13:28.000Z","relevance":3,"summary":"PFS outlines a 42-year open-pit operation that would mine the claystone without blasting and process it at an on-site plant."},{"title":"Renascor hits battery-grade purity at Adelaide plant","url":"https://www.australianmining.com.au/renascor-hits-battery-grade-purity-at-adelaide-plant/","source":"Australian Mining","published_at":"2026-10-09T00:18:30.000Z","relevance":1,"summary":"Renascor Resources' demonstration plant is based in Adelaide. Image: myphotobank.com.au/stock.adobe.com Renascor Resources has produced graphite at 99.97 per cent carbon purity, above the roughly 99.95 per cent typically required by battery makers for anodes in lithium-ion batteries used in electric vehicles and for energy storage. The result, achieved at its Adelaide demonstration plant, is what the company called key validation of a purification process that […] Australian "}],"articles":[{"url":"https://www.mining.com/cleantech-lithium-expands-foothold-in-argentina/","title":"CleanTech Lithium expands foothold in Argentina","published_at":"2026-10-08T12:03:00.000Z","author":null,"extraction":"paragraphs:article","text":"CleanTech Lithium (LON: CTL) has secured options to add two lithium brine properties in Argentina’s Salar de Antofalla, expanding its portfolio near its flagship Laguna Verde project.\nThe company signed agreements to acquire 100% of the Genoveva and Sal de Litio 1 properties, collectively known as the Antofalla project, about 80 km from Laguna Verde in Catamarca Province. The licences are adjacent to an exploration property held by Albemarle (NYSE: ALB), the world’s top lithium producer.\nCleanTech shares rose 7.4% in London following the announcement, closing at 7.25 pence apiece and giving the developer a market value of £25.5 million ($34 million).\nThe acquisition gives CleanTech a foothold in what it describes as Argentina’s largest undeveloped salt flat, with potential to share infrastructure and processing facilities across its regional lithium projects.\nThe company plans to begin exploration at Antofalla in 2027, while keeping Laguna Verde as its development priority.\n“We are excited by the addition of this project in Argentina,” CleanTech CEO Ignacio Mehech said. “We expect these three projects to have significant development synergies, as well as potentially benefitting from sharing a centralised conversion facility in Copiapó.”\nCleanTech will pay the unnamed sellers $525,000 during the first year, followed by another $1.4 million in scheduled payments between October 2027 and May 2031. The company plans to fund the approximately $1.93-million acquisition through existing cash resources.\nThe agreements give CleanTech the option to acquire both properties outright, although their exploration potential has yet to be established.\nManagement sees opportunities to integrate Antofalla with Laguna Verde and its Viento Andino project, potentially reducing future development costs through shared infrastructure.\n“The Laguna Verde project remains our main focus; however, the addition of the Antofalla project provides strong long-term value enhancement for our shareholders,” Mehech said.\nThe planned 2027 exploration program will be an early test of Antofalla’s resource potential and help determine how the properties could fit into CleanTech’s broader South American lithium development strategy.\nYour email address will not be published. Required fields are marked *\nSave my name, email, and website in this browser for the next time I comment.\nΔ document.getElementById( \"ak_js_1\" ).setAttribute( \"value\", ( new Date() ).getTime() );\nLevack is to join Magna’s producing McCreedy West mine as it builds a multi-mine business around Sudbury’s existing infrastructure.","truncated":false,"source":"MINING.com"},{"url":"https://www.mining.com/uk-scientists-turn-to-biology-to-unlock-cleaner-lithium/","title":"UK scientists turn to biology to unlock cleaner lithium","published_at":"2026-10-08T12:49:00.000Z","author":null,"extraction":"paragraphs:article","text":"Researchers at the University of Birmingham are leading a £6.2-million ($8.2-million) project to develop protein-based membranes that could make lithium extraction more selective and potentially less energy-intensive.\nThe three-year initiative, funded by the UK’s Advanced Research and Invention Agency (ARIA), will initially target one of the toughest challenges in direct lithium extraction (DLE): separating lithium from sodium to produce the high-purity lithium compounds required for battery manufacturing.\n“Biology can construct ordered materials with precision that is extremely difficult to achieve using existing manufacturing methods. We aim to harness this to create membranes with uniform, programmable pores,” project lead Dr. Dominik Kubicki, from the University of Birmingham, said.\nThe technology could eventually extend beyond battery materials to critical-mineral recovery, water treatment and chemical and pharmaceutical manufacturing. Its success would depend on whether researchers can translate the precision of biological structures into durable membranes capable of operating at industrial scales.\nThe consortium, which includes Aston University and three industrial partners, plans to use S-layer proteins, which naturally assemble into highly ordered two-dimensional lattices on the surfaces of many microorganisms.\nResearchers aim to engineer these proteins into large-area membranes containing uniformly sized pores capable of distinguishing between lithium and sodium ions despite their similar chemical properties.\nThe project forms part of ARIA’s Universal Fabricators program , which seeks to use engineered proteins as programmable building blocks for manufacturing materials with exceptional control over their geometry.\n“S-layer proteins offer an extraordinary starting point for materials engineering because they can spontaneously assemble into highly ordered structures,” project co-lead Professor Tim Knowles said.\n“By combining computational design, structural biology, and experimental screening, we aim to reprogram these natural building blocks to perform demanding technological functions.”\nIndustrial partners will contribute expertise across the development process. Fold9’s Jude Wells will lead AI-guided protein design, while UK-based Evove will handle membrane manufacturing, scale-up and testing. Adaptyv Bio will provide high-throughput screening capabilities to evaluate thousands of protein variants.\nThe most promising candidates will undergo larger-scale production and integration into practical membrane systems.\nThe researchers will combine computational protein design, structural biology, and high-throughput screening with protein production, membrane production, and testing under realistic operating conditions.\n“A key challenge will be translating molecular-level control into membranes that can be manufactured and operated at useful scales,” Professor Owen Thomas, from the University of Birmingham, said. “Close integration of biological design, materials characterisation, and chemical engineering gives us the opportunity to address that challenge from the outset.”\nThe programme will combine computational protein design, structural biology and experimental screening with membrane production and testing under realistic operating conditions.\nAlthough the approach remains at the research stage, the consortium hopes to establish a manufacturing platform capable of producing highly selective separation materials for multiple industries.\nFor lithium producers, the critical test will be whether the engineered membranes can deliver reliable separation performance outside the laboratory while maintaining the durability and scalability needed for commercial use.\nYour email address will not be published. Required fields are marked *\nSave my name, email, and website in this browser for the next time I comment.\nΔ document.getElementById( \"ak_js_1\" ).setAttribute( \"value\", ( new Date() ).getTime() );\nLevack is to join Magna’s p","truncated":true,"source":"MINING.com"},{"url":"https://www.mining.com/sigma-lithium-jumps-as-brazil-court-clears-grota-mine-restart/","title":"Sigma Lithium stock jumps as Brazil court clears Grota mine restart","published_at":"2026-10-07T10:47:00.000Z","author":null,"extraction":"paragraphs:article","text":"Sigma Lithium (NASDAQ: SGML) (ASX: SAU) (TSX-V: SGML) shares jumped 5.9% in New York pre-market trading Wednesday after a Brazilian appeals court upheld environmental licences for its flagship Grota do Cirilo lithium mine, clearing the company to resume mining and processing operations.\nThe federal appeals court overturned an emergency order issued in September that suspended the licences in connection with a lawsuit filed by Ngolo, an association claiming to represent local Quilombola communities.\nThe court said a prolonged shutdown would cause significant and lasting economic harm in the Vale do Jequitinhonha region of Minas Gerais state.\nThe decision removes an immediate legal obstacle for Grota do Cirilo, considered among the world’s largest and highest-grade hard-rock lithium deposits, as Sigma works towards an annualized lithium oxide concentrate production rate of 330,000 tonnes by the end of 2027.\nSigma said it can reach the 2027 target without adding capacity, relying on its existing Mine 1 South Pit operations and Cleantech Industrial Plant.\nThe plant demonstrated production above 950 tonnes per day following a technological upgrade in the fourth quarter of 2024, according to the company. Output topped 1,000 tonnes on several days.\nThe restart returns attention to Sigma’s ability to ramp up production after the court dispute interrupted operations at its main asset. Achieving the planned increase using existing infrastructure could limit the additional capital required to meet its 2027 guidance.\nSigma shares were last trading at $10.29 before the New York market opened, up from Tuesday’s $9.56 close. The lithium miner had a market value of about $1.52 billion.\nYour email address will not be published. Required fields are marked *\nSave my name, email, and website in this browser for the next time I comment.\nΔ document.getElementById( \"ak_js_1\" ).setAttribute( \"value\", ( new Date() ).getTime() );\nLevack is to join Magna’s producing McCreedy West mine as it builds a multi-mine business around Sudbury’s existing infrastructure.","truncated":false,"source":"MINING.com"}],"pdfs":[{"source":{"requested":"fixture:pilbara_ni43101_sample","resolved":"file:///app/fixtures/pdfs/pilbara_ni43101_sample.pdf","used_cache":false},"pdf":{"pages_scanned":1,"extracted_chars":1256},"report":{"project":"Pilgangoora Lithium Tantalite Project, Pilbara, Western Australia","effective_date":"30 June 2026","qualified_person":"J. Whitmore, P.Geo.","commodity":["lithium","tantalum"],"study_stage":"prefeasibility","ni_43_101_reference":true},"resources":{"Measured":{"tonnage_m_t":18.4,"grade_pct":1.28,"contained_metal_kt_lce":235},"Indicated":{"tonnage_m_t":132.6,"grade_pct":1.21,"contained_metal_kt_lce":1432},"Inferred":{"tonnage_m_t":74.9,"grade_pct":1.16,"contained_metal_kt_lce":702}},"totals":{"measured_plus_indicated":{"tonnage_m_t":151,"grade_pct":1.22,"contained_metal_kt_lce":1667},"inferred":null,"parsed_tonnage_m_t":225.9,"parsed_contained_kt_lce":2369,"inferred_share_of_tonnage":0.332},"confidence":{"level":"high","parsed_categories":["Measured","Indicated","Inferred"],"source_form":"table_rows"},"risk_flags":[{"level":"medium","flag":"Qualified-person caution","quote":"The Qualified Person cautions that Inferred Mineral Resources are too uncertain to apply economic and technical factors reliably."},{"level":"low","flag":"Permitting / schedule / cost risk mentioned","quote":"Mining lease, Native Title approvals and a 5-year environmental permitting window remain outstanding."},{"level":"low","flag":"Permitting / schedule / cost risk mentioned","quote":"There is a risk of cost overrun on tailings storage."}]}],"prices":[{"commodity":"Spodumene concentrate SC6.0","commodity_id":"spodumene_6pct","date":"2026-10-09","price":804.56,"unit":"USD/t","incoterm":"CIF China","currency":"USD","previous_close":837.62,"change_pct":-3.95,"source":"deterministic_series","data_note":"Deterministic synthetic series seeded by commodity+date (reproducible demo data). Set PRICE_API_URL to plug in a licensed feed.","notes":"6.0% Li2O spodumene concentrate, the price Pilbara producers realise."},{"commodity":"Lithium hydroxide (battery grade)","commodity_id":"lithium_hydroxide_cif","date":"2026-10-09","price":10321.66,"unit":"USD/t","incoterm":"CIF China","currency":"USD","previous_close":9655.47,"change_pct":6.9,"source":"deterministic_series","data_note":"Deterministic synthetic series seeded by commodity+date (reproducible demo data). Set PRICE_API_URL to plug in a licensed feed.","notes":"Battery-grade LiOH.H2O, 56.5% min."}],"trends":[{"commodity":"Spodumene concentrate SC6.0","commodity_id":"spodumene_6pct","unit":"USD/t","incoterm":"CIF China","window":{"from":"2026-09-10","to":"2026-10-09","days":30},"start":841.21,"latest":804.56,"change_pct":-4.36,"direction":"down","mean":818.86,"min":769.19,"max":863.2,"stdev":23.15,"cv_pct":2.83,"up_days":12,"down_days":17,"sparkline":"▆▇▅▅▆▄█▄▇▆▃▇▅▄▄▃▄▇▆▄▃▅▁▆▁▅▂▂▆▄","series":[{"date":"2026-09-10","price":841.21},{"date":"2026-09-11","price":845.7},{"date":"2026-09-12","price":827.73},{"date":"2026-09-13","price":824.94},{"date":"2026-09-14","price":832.6},{"date":"2026-09-15","price":814.68},{"date":"2026-09-16","price":863.2},{"date":"2026-09-17","price":808.02},{"date":"2026-09-18","price":852.94},{"date":"2026-09-19","price":834.81},{"date":"2026-09-20","price":800.65},{"date":"2026-09-21","price":843.63},{"date":"2026-09-22","price":820.28},{"date":"2026-09-23","price":805.6},{"date":"2026-09-24","price":814},{"date":"2026-09-25","price":799.37},{"date":"2026-09-26","price":809.17},{"date":"2026-09-27","price":843.87},{"date":"2026-09-28","price":842.77},{"date":"2026-09-29","price":809.01},{"date":"2026-09-30","price":798.59},{"date":"2026-10-01","price":820.63},{"date":"2026-10-02","price":773.76},{"date":"2026-10-03","price":834.8},{"date":"2026-10-04","price":769.19},{"date":"2026-10-05","price":823.52},{"date":"2026-10-06","price":786.7},{"date":"2026-10-07","price":782.17},{"date":"2026-10-08","price":837.62},{"date":"2026-10-09","price":804.56}],"source":"deterministic_series","data_note":"Deterministic synthetic series seeded by commodity+date (reproducible demo data). Set PRICE_API_URL to plug in a licensed feed."},{"commodity":"Lithium hydroxide (battery grade)","commodity_id":"lithium_hydroxide_cif","unit":"USD/t","incoterm":"CIF China","window":{"from":"2026-09-10","to":"2026-10-09","days":30},"start":9890.96,"latest":10321.66,"change_pct":4.35,"direction":"up","mean":9998.22,"min":9408.66,"max":10753.99,"stdev":292.08,"cv_pct":2.92,"up_days":12,"down_days":17,"sparkline":"▄▄▆▅▅▃█▆▄▄▄▂▄▃▂▅▃▁▄▅▅▆▄▃▁▃▆▅▂▆","series":[{"date":"2026-09-10","price":9890.96},{"date":"2026-09-11","price":9980.56},{"date":"2026-09-12","price":10337.01},{"date":"2026-09-13","price":10179.87},{"date":"2026-09-14","price":10171.59},{"date":"2026-09-15","price":9884.09},{"date":"2026-09-16","price":10753.99},{"date":"2026-09-17","price":10291.73},{"date":"2026-09-18","price":10004.05},{"date":"2026-09-19","price":9942.99},{"date":"2026-09-20","price":10021.27},{"date":"2026-09-21","price":9594.47},{"date":"2026-09-22","price":9905.74},{"date":"2026-09-23","price":9797.14},{"date":"2026-09-24","price":9650.75},{"date":"2026-09-25","price":10127.73},{"date":"2026-09-26","price":9774.25},{"date":"2026-09-27","price":9408.66},{"date":"2026-09-28","price":9934.19},{"date":"2026-09-29","price":10198.26},{"date":"2026-09-30","price":10174.9},{"date":"2026-10-01","price":10321.59},{"date":"2026-10-02","price":10028.41},{"date":"2026-10-03","price":9862.76},{"date":"2026-10-04","price":9414.48},{"date":"2026-10-05","price":9792.27},{"date":"2026-10-06","price":10307.44},{"date":"2026-10-07","price":10218.35},{"date":"2026-10-08","price":9655.47},{"date":"2026-10-09","price":10321.66}],"source":"deterministic_series","data_note":"Deterministic synthetic series seeded by commodity+date (reproducible demo data). Set PRICE_API_URL to plug in a licensed feed."}],"trace":[{"tool":"mining-news-mcp.search","args":{"query":"Pilbara lithium daily lithium","days":7,"limit":8},"ok":true,"ms":2734},{"tool":"mining-news-mcp.fetch_article","args":{"url":"https://www.mining.com/cleantech-lithium-expands-foothold-in-argentina/"},"ok":true,"ms":859},{"tool":"mining-news-mcp.fetch_article","args":{"url":"https://www.mining.com/uk-scientists-turn-to-biology-to-unlock-cleaner-lithium/"},"ok":true,"ms":635},{"tool":"mining-news-mcp.fetch_article","args":{"url":"https://www.mining.com/sigma-lithium-jumps-as-brazil-court-clears-grota-mine-restart/"},"ok":true,"ms":646},{"tool":"mineral-pdf-mcp.extract_resources","args":{"pdf_url":"fixture:pilbara_ni43101_sample"},"ok":true,"ms":253},{"tool":"lime-price-mcp.get_price","args":{"commodity":"spodumene_6pct"},"ok":true,"ms":3},{"tool":"lime-price-mcp.get_trend","args":{"commodity":"spodumene_6pct","days":30},"ok":true,"ms":12},{"tool":"lime-price-mcp.get_price","args":{"commodity":"lithium_hydroxide_cif"},"ok":true,"ms":0},{"tool":"lime-price-mcp.get_trend","args":{"commodity":"lithium_hydroxide_cif","days":30},"ok":true,"ms":1}]},"validation":{"rows":[{"server":"mining-news-mcp","check":"tools/list","status":"PASS","detail":"search, fetch_article"},{"server":"mining-news-mcp","check":"tools/call search","status":"PASS","detail":"3 hits (Live RSS results.)"},{"server":"mining-news-mcp","check":"tools/call fetch_article","status":"PASS","detail":"1200 chars"},{"server":"mineral-pdf-mcp","check":"tools/list","status":"PASS","detail":"extract_resources"},{"server":"mineral-pdf-mcp","check":"tools/call extract_resources","status":"PASS","detail":"Indicated 132.6 Mt @ 1.21% / Inferred 74.9 Mt @ 1.16%"},{"server":"lime-price-mcp","check":"tools/list","status":"PASS","detail":"get_price, get_trend"},{"server":"lime-price-mcp","check":"tools/call get_price","status":"PASS","detail":"804.56 USD/t on 2026-10-09"},{"server":"lime-price-mcp","check":"tools/call get_trend","status":"PASS","detail":"Lithium hydroxide (battery grade) 4.35% (up)"}],"allPassed":true,"error":null}}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const E = D.evidence || {};
+const esc = s => (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function inline(t){
+  t = esc(t);
+  t = t.replace(/`([^`]+)`/g,'<code>$1</code>');
+  t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  t = t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  t = t.replace(/\*([^*]+)\*/g,'<i>$1</i>');
+  t = t.replace(/&lt;sub&gt;(.*?)&lt;\/sub&gt;/g,'<sub>$1</sub>');
+  return t;
+}
+function renderMd(src){
+  const L = src.replace(/\r/g,'').split('\n'); const out=[]; let i=0;
+  const isTableSep = s => /^\s*\|[-: |]+\|?\s*$/.test(s) && s.includes('-');
+  while(i<L.length){
+    let ln=L[i];
+    if(/^```/.test(ln)){let buf=[];i++;while(i<L.length&&!/^```/.test(L[i]))buf.push(L[i++]);i++;out.push('<pre><code>'+esc(buf.join('\n'))+'</code></pre>');continue;}
+    if(/^\s*\|/.test(ln)&&isTableSep(L[i+1]||'')){
+      const head=ln;const rows=[];i+=2;while(i<L.length&&/^\s*\|/.test(L[i]))rows.push(L[i++]);
+      const cell=s=>s.replace(/^\s*\|/,'').replace(/\|\s*$/,'').split('|').map(x=>inline(x.trim()));
+      let t='<table><thead><tr>'+cell(head).map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>';
+      t+=rows.map(r=>'<tr>'+cell(r).map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
+      out.push(t+'</tbody></table>');continue;
+    }
+    let m;
+    if(m=ln.match(/^(#{1,6})\s+(.*)$/)){const h=m[1].length;out.push('<h'+h+'>'+inline(m[2])+'</h'+h+'>');i++;continue;}
+    if(/^\s*---+\s*$/.test(ln)){out.push('<hr>');i++;continue;}
+    if(/^\s*>\s?/.test(ln)){let buf=[];while(i<L.length&&/^\s*>\s?/.test(L[i]))buf.push(L[i++].replace(/^\s*>\s?/,''));out.push('<blockquote>'+inline(buf.join(' '))+'</blockquote>');continue;}
+    if(/^\s*[-*]\s+/.test(ln)){let buf=[];while(i<L.length&&/^\s*[-*]\s+/.test(L[i]))buf.push(L[i++].replace(/^\s*[-*]\s+/,''));out.push('<ul>'+buf.map(x=>'<li>'+inline(x)+'</li>').join('')+'</ul>');continue;}
+    if(/^\s*\d+\.\s+/.test(ln)){let buf=[];while(i<L.length&&/^\s*\d+\.\s+/.test(L[i]))buf.push(L[i++].replace(/^\s*\d+\.\s+/,''));out.push('<ol>'+buf.map(x=>'<li>'+inline(x)+'</li>').join('')+'</ol>');continue;}
+    if(/^\s*$/.test(ln)){i++;continue;}
+    let buf=[];while(i<L.length&&!/^\s*$/.test(L[i])&&!/^(#|>|\s*[-*]\s|\s*\d+\.\s|```|\s*\|)/.test(L[i])&&!/^\s*---+\s*$/.test(L[i]))buf.push(L[i++]);
+    out.push('<p>'+inline(buf.join(' '))+'</p>');
+  }
+  return out.join('\n');
+}
+
+const stats=[
+  ['3','MCP servers'],['5','工具'],
+  [(E.news_results||[]).length,'命中新闻'],
+  [(E.trace||[]).length,'工具调用'],
+  [D.validation.allPassed===false?'FAIL':'PASS','协议校验'],
+];
+document.getElementById('statbar').innerHTML=stats.map(s=>'<div class="stat"><b>'+esc(s[0])+'</b><span>'+esc(s[1])+'</span></div>').join('');
+document.getElementById('mode').textContent=E.mode||'deterministic-planner';
+document.getElementById('md').innerHTML=renderMd(D.reportMd||'');
+
+const vr=D.validation;
+let vh='';
+if(vr.error==='skipped'){vh='<p class="sub">构建时跳过校验（--no-validate）。运行 <code>npm run validate</code> 查看。</p>';}
+else if(vr.error){vh='<p class="st FAIL">校验未能运行：'+esc(vr.error)+'</p>';}
+else{
+  const ok=vr.allPassed;
+  vh='<div style="margin-bottom:14px"><span class="'+(ok?'tag pass':'tag')+'" style="'+(ok?'':'color:var(--fail);border-color:#5c2c2c;background:#2c1717')+'">'+(ok?'✓ ALL CHECKS PASSED':'✗ 有检查未通过')+'</span> <span class="sub">'+vr.rows.length+' checks</span></div>';
+  vh+='<table class="grid"><thead><tr><th>Server</th><th>检查项</th><th>结果</th><th>返回摘要</th></tr></thead><tbody>';
+  vh+=vr.rows.map(r=>'<tr><td class="mono">'+esc(r.server)+'</td><td class="mono">'+esc(r.check)+'</td><td class="st '+r.status+'">'+r.status+'</td><td>'+esc(r.detail)+'</td></tr>').join('');
+  vh+='</tbody></table>';
+}
+document.getElementById('validcard').innerHTML=vh;
+
+const tr=E.trace||[];const maxms=Math.max(1,...tr.map(t=>t.ms||0));
+document.getElementById('tracecount').textContent=tr.length;
+let th='<table class="grid trace"><thead><tr><th>#</th><th>工具</th><th>参数</th><th>结果</th><th>耗时</th></tr></thead><tbody>';
+th+=tr.map((t,i)=>'<tr><td>'+(i+1)+'</td><td class="mono">'+esc(t.tool)+'</td><td class="mono" style="color:var(--muted)">'+esc(JSON.stringify(t.args)).slice(0,70)+'</td><td class="st '+(t.ok?'PASS':'FAIL')+'">'+(t.ok?'✓':esc(t.error||'✗'))+'</td><td><div class="bar" title="'+t.ms+'ms"><i style="width:'+Math.max(6,(t.ms/maxms*100))+'%"></i></div><span style="font-size:11px">'+t.ms+'ms</span></td></tr>').join('');
+th+='</tbody></table>';
+document.getElementById('tracecard').innerHTML=tr.length?th:'<p class="sub">无轨迹数据。</p>';
+
+const CT=[
+  ['mining-news-mcp','search','query, days=7, limit=8','排序后的标题/URL/日期/摘要 + data_note 标注实时或降级'],
+  ['mining-news-mcp','fetch_article','url, max_chars=6000','正文纯文本、作者、抽取方式（json-ld / paragraphs）'],
+  ['mineral-pdf-mcp','extract_resources','pdf_url, max_pages=20','分类资源量、M+I/Inferred 合计、生效日期、QP、置信度、风险标记'],
+  ['lime-price-mcp','get_price','commodity, date?','报价 + 前收 + 日变动 + 贸易条款 + data_note'],
+  ['lime-price-mcp','get_trend','commodity, days=30','完整序列 + 涨跌/均值/区间/CV + ASCII sparkline'],
+];
+let ch='<table class="grid"><thead><tr><th>Server</th><th>工具</th><th>入参</th><th>返回要点</th></tr></thead><tbody>';
+ch+=CT.map(r=>'<tr><td class="mono" style="color:var(--muted)">'+r[0]+'</td><td class="mono" style="color:var(--gold2)">'+r[1]+'</td><td class="mono">'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>').join('');
+ch+='</tbody></table>';
+document.getElementById('contractcard').innerHTML=ch;
+
+const QUICK='cd mining-daily-agent\nnpm install            <span class="c"># 一次性，1-5 分钟</span>\nnpm run fixture-pdf    <span class="c"># 生成测试用 NI 43-101 PDF</span>\nnpm run validate       <span class="c"># 拉起 3 个 server 跑协议校验</span>\n<b>npm run demo</b>           <span class="c"># 出简报 → agent/output/pilbara-report.md</span>\nnpm run showcase       <span class="c"># 重新生成本页</span>';
+const VAR='node agent/src/index.mjs --query "氢氧化锂 价格走势" -o agent/output/lh.md\nNEWS_MODE=fixture npm run demo        <span class="c"># 全离线</span>\nnode agent/src/index.mjs --query "Greenbushes 锂矿" --pdf "https://…/report.pdf"\nnode agent/src/index.mjs --serve              <span class="c"># 交互式 REPL</span>\nnpm run config:client                   <span class="c"># 生成 Claude Desktop / Cursor 配置</span>';
+document.getElementById('quick').innerHTML='<button class="copy">复制</button><pre>'+QUICK+'</pre>';
+document.getElementById('variants').innerHTML='<button class="copy">复制</button><pre>'+VAR+'</pre>';
+
+document.getElementById('foot').textContent=
+  'mining-daily-agent · 页面生成于 '+new Date(D.builtAt).toISOString().replace('T',' ').slice(0,16)+' UTC · 自包含单文件，可离线打开';
+
+const tabs=document.getElementById('tabs');
+tabs.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...tabs.children].forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));
+  window.scrollTo({top:0,behavior:'smooth'});});
+document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',()=>{
+  const pre=btn.parentElement.querySelector('pre');
+  navigator.clipboard?.writeText(pre.innerText).then(()=>{btn.textContent='已复制';setTimeout(()=>btn.textContent='复制',1400);});
+}));
+</script>
+</body>
+</html>

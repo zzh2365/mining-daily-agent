@@ -1,0 +1,6 @@
+node_modules/
+agent/output/
+.env
+*.log
+.DS_Store
+mcp-config.client.json

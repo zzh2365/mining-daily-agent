@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>矿权日报 Agent · MCP 交付展示</title>
+<style>
+  :root{
+    --bg:#0f1729;--panel:#182032;--panel2:#1f2a40;--ink:#e6ecf7;--muted:#8b9bb8;
+    --line:#2a3752;--gold:#c9a24b;--gold2:#e6c877;--live:#3fb984;--demo:#c98a3f;--synth:#5b8def;
+    --pass:#3fb984;--fail:#e5544b;--chip:#22304a;--mono:ui-monospace,"SF Mono",Cascadia,"JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#0c1322,#0f1729 40%);color:var(--ink);
+    font:16px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+  a{color:var(--gold2);text-decoration:none}a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px 90px}
+  header.hero{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+  .eyebrow{color:var(--gold);font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase}
+  h1{font-size:38px;margin:12px 0 8px;font-weight:800;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:16px;max-width:70ch}
+  .statbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:110px}
+  .stat b{display:block;font-size:22px;font-family:var(--mono);color:var(--gold2)}
+  .stat span{font-size:12px;color:var(--muted)}
+  nav.tabs{position:sticky;top:0;z-index:20;background:rgba(15,23,41,.92);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);margin:0 -22px 34px;padding:0 22px;display:flex;gap:4px;overflow-x:auto}
+  nav.tabs button{background:none;border:0;color:var(--muted);font:inherit;font-size:14px;padding:15px 16px;cursor:pointer;
+    border-bottom:2px solid transparent;white-space:nowrap}
+  nav.tabs button.on{color:var(--ink);border-bottom-color:var(--gold)}
+  section{display:none;animation:fade .3s ease}section.on{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h2{font-size:26px;margin:6px 0 18px}h3{font-size:19px;margin:26px 0 10px;color:var(--gold2)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0}
+  .tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--mono);padding:3px 10px;border-radius:99px;border:1px solid var(--line)}
+  .tag.live{color:var(--live);border-color:#2c5c48;background:#173027}
+  .tag.demo{color:var(--demo);border-color:#5c4526;background:#2c2114}
+  .tag.synth{color:var(--synth);border-color:#2c4270;background:#18233b}
+  .tag.pass{color:var(--pass);border-color:#2c5c48;background:#173027}
+  .arch{display:grid;grid-template-columns:1fr;gap:16px}
+  .flow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;flex:1;min-width:180px}
+  .node .role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)}
+  .node .name{font-weight:700;font-size:15px;margin-top:3px}
+  .node.core{border-color:var(--gold);background:linear-gradient(180deg,#241f14,#1f2a40)}
+  .arrow{color:var(--gold);font-size:22px;flex:0}
+  .srvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .srv{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .srv h4{margin:0 0 4px;font-size:15px;font-family:var(--mono);color:var(--gold2)}
+  .srv p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+  .tools{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
+  .tools li{font-family:var(--mono);font-size:12.5px;background:var(--chip);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+  .tools li em{color:var(--gold2);font-style:normal}
+  .md{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 30px}
+  .md h1{font-size:26px;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .md h2{font-size:20px;margin-top:30px;color:var(--gold2);border-left:3px solid var(--gold);padding-left:11px}
+  .md h3{font-size:16px}
+  .md table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;display:block;overflow-x:auto}
+  .md th,.md td{border:1px solid var(--line);padding:7px 11px;text-align:left}
+  .md th{background:var(--panel2);color:var(--gold2)}
+  .md tr:nth-child(even) td{background:#1b2437}
+  .md blockquote{border-left:3px solid var(--line);margin:12px 0;padding:4px 16px;color:var(--muted)}
+  .md code{font-family:var(--mono);background:#0d1424;padding:2px 6px;border-radius:5px;font-size:13px}
+  .md pre{background:#0d1424;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto}
+  .md pre code{background:none;padding:0}
+  .md ul,.md ol{padding-left:24px}.md li{margin:5px 0}
+  .md hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+  .md sub{color:var(--muted);font-family:var(--mono);font-size:11px}
+  table.grid{border-collapse:collapse;width:100%;font-size:13.5px}
+  table.grid th,table.grid td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  table.grid th{background:var(--panel2);color:var(--gold2);font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .st{font-family:var(--mono);font-weight:700}.st.PASS{color:var(--pass)}.st.FAIL{color:var(--fail)}
+  .mono{font-family:var(--mono)}
+  .trace td{font-family:var(--mono);font-size:12.5px}
+  .bar{height:7px;border-radius:4px;background:var(--line);position:relative;min-width:60px;display:inline-block;width:80px;vertical-align:middle;margin-right:6px}
+  .bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--gold)}
+  .cmd{background:#0d1424;border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:13px;position:relative;overflow-x:auto;margin:12px 0}
+  .cmd b{color:var(--gold2)}.cmd .c{color:var(--muted)}
+  .cmd pre{margin:0;white-space:pre-wrap}
+  .copy{position:absolute;right:8px;top:8px;background:var(--chip);border:1px solid var(--line);color:var(--muted);
+    font:inherit;font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer}
+  .copy:hover{color:var(--ink)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:5px}.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  footer{color:var(--muted);font-size:12.5px;text-align:center;padding:34px 0;border-top:1px solid var(--line);margin-top:40px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">Model Context Protocol · 24h Build</div>
+  <h1>矿权日报 Agent</h1>
+  <p class="sub">3 个 MCP server + 1 个 Agent client，输入一句「Pilbara 锂矿今日简报」，经真实 stdio 工具调用产出一份带引用源的 Markdown 简报。本页由最新一次 demo 运行离线生成，可直接双击打开。</p>
+  <div class="statbar" id="statbar"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-t="arch" class="on">架构与编排</button>
+  <button data-t="report">简报正文</button>
+  <button data-t="valid">协议校验 · 调用轨迹</button>
+  <button data-t="contract">工具契约 · 上手</button>
+</nav>
+
+<section id="arch" class="on">
+  <h2>系统架构</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="node" style="max-width:150px;flex:0 0 130px"><div class="role">Input</div><div class="name">一句请求</div></div>
+      <div class="arrow">→</div>
+      <div class="node core"><div class="role">MCP Client · agent/src</div><div class="name">ReAct 循环 / 确定性 planner</div></div>
+      <div class="arrow">→</div>
+      <div class="node" style="max-width:170px;flex:0 0 150px"><div class="role">Output</div><div class="name">Markdown 简报 + 引用源</div></div>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--live)"></i>ReAct：配 API key 时模型自选工具与轮次</span>
+      <span><i class="dot" style="background:var(--gold)"></i>确定性 planner：无模型也能跑完，结果可复现</span>
+    </div>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:0">Client 通过 <b class="mono">McpHub</b> 用 stdio 拉起每个 server（initialize → tools/list → tools/call），把工具目录喂给编排层；所有数字仅来自工具返回值，LLM 只做证据挑选与文字撰写。本次运行编排模式：<span class="mono" id="mode"></span></p>
+  </div>
+
+  <h3>三个 MCP Server · 五个工具</h3>
+  <div class="srvgrid">
+    <div class="srv">
+      <h4>mining-news-mcp</h4>
+      <span class="tag live">● 实时 RSS</span>
+      <p>聚合 mining.com / australianmining.com.au，30 分钟磁盘缓存，断网降级到本地 fixture。</p>
+      <ul class="tools">
+        <li><em>search</em>(query, days, limit)</li>
+        <li><em>fetch_article</em>(url, max_chars)</li>
+      </ul>
+    </div>
+    <div class="srv">
+      <h4>mineral-pdf-mcp</h4>
+      <span class="tag demo">◐ 真实解析 + 合成样例</span>
+      <p>pdfjs-dist 抽文本层，NI 43-101 启发式解析表格式与叙述式资源量披露。</p>
+      <ul class="tools">
+        <li><em>extract_resources</em>(pdf_url, max_pages)</li>
+      </ul>
+    </div>
+    <div class="srv">
+      <h4>lime-price-mcp</h4>
+      <span class="tag synth">○ 确定性合成序列</span>
+      <p>按 品种+日期 播种、可复现；设 PRICE_API_URL 即零改动切授权行情源。</p>
+      <ul class="tools">
+        <li><em>get_price</em>(commodity, date)</li>
+        <li><em>get_trend</em>(commodity, days)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="report">
+  <h2>生成的简报正文</h2>
+  <p class="sub" style="margin-bottom:14px">固定五节：新闻摘要 → NI 43-101 资源量 → 价格走势 → 风险提示 → 引用源，附工具调用轨迹。下方为 <span class="mono">agent/output/pilbara-report.md</span> 的原文渲染。</p>
+  <div class="md" id="md"></div>
+</section>
+
+<section id="valid">
+  <h2>协议校验结果</h2>
+  <p class="sub" style="margin-bottom:14px"><span class="mono">scripts/validate-mcp.mjs</span> 用真实 MCP stdio 客户端逐个拉起 server，跑 initialize → tools/list → tools/call 并断言返回值。</p>
+  <div class="card" id="validcard"></div>
+
+  <h2 style="margin-top:34px">工具调用轨迹</h2>
+  <p class="sub" style="margin-bottom:14px">本次 demo 的 <span class="mono" id="tracecount"></span> 次调用，逐条对应简报中的数字来源。</p>
+  <div class="card" id="tracecard"></div>
+</section>
+
+<section id="contract">
+  <h2>工具契约</h2>
+  <div class="card" id="contractcard"></div>
+  <h3 style="margin-top:30px">5 分钟跑起来</h3>
+  <div class="cmd" id="quick"></div>
+  <h3>常用变体</h3>
+  <div class="cmd" id="variants"></div>
+</section>
+
+<footer id="foot"></footer>
+</div>
+
+<script type="application/json" id="data">__PAYLOAD__</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const E = D.evidence || {};
+const esc = s => (s==null?'':String(s)).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function inline(t){
+  t = esc(t);
+  t = t.replace(/`([^`]+)`/g,'<code>$1</code>');
+  t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  t = t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  t = t.replace(/\*([^*]+)\*/g,'<i>$1</i>');
+  t = t.replace(/&lt;sub&gt;(.*?)&lt;\/sub&gt;/g,'<sub>$1</sub>');
+  return t;
+}
+function renderMd(src){
+  const L = src.replace(/\r/g,'').split('\n'); const out=[]; let i=0;
+  const isTableSep = s => /^\s*\|[-: |]+\|?\s*$/.test(s) && s.includes('-');
+  while(i<L.length){
+    let ln=L[i];
+    if(/^```/.test(ln)){let buf=[];i++;while(i<L.length&&!/^```/.test(L[i]))buf.push(L[i++]);i++;out.push('<pre><code>'+esc(buf.join('\n'))+'</code></pre>');continue;}
+    if(/^\s*\|/.test(ln)&&isTableSep(L[i+1]||'')){
+      const head=ln;const rows=[];i+=2;while(i<L.length&&/^\s*\|/.test(L[i]))rows.push(L[i++]);
+      const cell=s=>s.replace(/^\s*\|/,'').replace(/\|\s*$/,'').split('|').map(x=>inline(x.trim()));
+      let t='<table><thead><tr>'+cell(head).map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>';
+      t+=rows.map(r=>'<tr>'+cell(r).map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
+      out.push(t+'</tbody></table>');continue;
+    }
+    let m;
+    if(m=ln.match(/^(#{1,6})\s+(.*)$/)){const h=m[1].length;out.push('<h'+h+'>'+inline(m[2])+'</h'+h+'>');i++;continue;}
+    if(/^\s*---+\s*$/.test(ln)){out.push('<hr>');i++;continue;}
+    if(/^\s*>\s?/.test(ln)){let buf=[];while(i<L.length&&/^\s*>\s?/.test(L[i]))buf.push(L[i++].replace(/^\s*>\s?/,''));out.push('<blockquote>'+inline(buf.join(' '))+'</blockquote>');continue;}
+    if(/^\s*[-*]\s+/.test(ln)){let buf=[];while(i<L.length&&/^\s*[-*]\s+/.test(L[i]))buf.push(L[i++].replace(/^\s*[-*]\s+/,''));out.push('<ul>'+buf.map(x=>'<li>'+inline(x)+'</li>').join('')+'</ul>');continue;}
+    if(/^\s*\d+\.\s+/.test(ln)){let buf=[];while(i<L.length&&/^\s*\d+\.\s+/.test(L[i]))buf.push(L[i++].replace(/^\s*\d+\.\s+/,''));out.push('<ol>'+buf.map(x=>'<li>'+inline(x)+'</li>').join('')+'</ol>');continue;}
+    if(/^\s*$/.test(ln)){i++;continue;}
+    let buf=[];while(i<L.length&&!/^\s*$/.test(L[i])&&!/^(#|>|\s*[-*]\s|\s*\d+\.\s|```|\s*\|)/.test(L[i])&&!/^\s*---+\s*$/.test(L[i]))buf.push(L[i++]);
+    out.push('<p>'+inline(buf.join(' '))+'</p>');
+  }
+  return out.join('\n');
+}
+
+const stats=[
+  ['3','MCP servers'],['5','工具'],
+  [(E.news_results||[]).length,'命中新闻'],
+  [(E.trace||[]).length,'工具调用'],
+  [D.validation.allPassed===false?'FAIL':'PASS','协议校验'],
+];
+document.getElementById('statbar').innerHTML=stats.map(s=>'<div class="stat"><b>'+esc(s[0])+'</b><span>'+esc(s[1])+'</span></div>').join('');
+document.getElementById('mode').textContent=E.mode||'deterministic-planner';
+document.getElementById('md').innerHTML=renderMd(D.reportMd||'');
+
+const vr=D.validation;
+let vh='';
+if(vr.error==='skipped'){vh='<p class="sub">构建时跳过校验（--no-validate）。运行 <code>npm run validate</code> 查看。</p>';}
+else if(vr.error){vh='<p class="st FAIL">校验未能运行：'+esc(vr.error)+'</p>';}
+else{
+  const ok=vr.allPassed;
+  vh='<div style="margin-bottom:14px"><span class="'+(ok?'tag pass':'tag')+'" style="'+(ok?'':'color:var(--fail);border-color:#5c2c2c;background:#2c1717')+'">'+(ok?'✓ ALL CHECKS PASSED':'✗ 有检查未通过')+'</span> <span class="sub">'+vr.rows.length+' checks</span></div>';
+  vh+='<table class="grid"><thead><tr><th>Server</th><th>检查项</th><th>结果</th><th>返回摘要</th></tr></thead><tbody>';
+  vh+=vr.rows.map(r=>'<tr><td class="mono">'+esc(r.server)+'</td><td class="mono">'+esc(r.check)+'</td><td class="st '+r.status+'">'+r.status+'</td><td>'+esc(r.detail)+'</td></tr>').join('');
+  vh+='</tbody></table>';
+}
+document.getElementById('validcard').innerHTML=vh;
+
+const tr=E.trace||[];const maxms=Math.max(1,...tr.map(t=>t.ms||0));
+document.getElementById('tracecount').textContent=tr.length;
+let th='<table class="grid trace"><thead><tr><th>#</th><th>工具</th><th>参数</th><th>结果</th><th>耗时</th></tr></thead><tbody>';
+th+=tr.map((t,i)=>'<tr><td>'+(i+1)+'</td><td class="mono">'+esc(t.tool)+'</td><td class="mono" style="color:var(--muted)">'+esc(JSON.stringify(t.args)).slice(0,70)+'</td><td class="st '+(t.ok?'PASS':'FAIL')+'">'+(t.ok?'✓':esc(t.error||'✗'))+'</td><td><div class="bar" title="'+t.ms+'ms"><i style="width:'+Math.max(6,(t.ms/maxms*100))+'%"></i></div><span style="font-size:11px">'+t.ms+'ms</span></td></tr>').join('');
+th+='</tbody></table>';
+document.getElementById('tracecard').innerHTML=tr.length?th:'<p class="sub">无轨迹数据。</p>';
+
+const CT=[
+  ['mining-news-mcp','search','query, days=7, limit=8','排序后的标题/URL/日期/摘要 + data_note 标注实时或降级'],
+  ['mining-news-mcp','fetch_article','url, max_chars=6000','正文纯文本、作者、抽取方式（json-ld / paragraphs）'],
+  ['mineral-pdf-mcp','extract_resources','pdf_url, max_pages=20','分类资源量、M+I/Inferred 合计、生效日期、QP、置信度、风险标记'],
+  ['lime-price-mcp','get_price','commodity, date?','报价 + 前收 + 日变动 + 贸易条款 + data_note'],
+  ['lime-price-mcp','get_trend','commodity, days=30','完整序列 + 涨跌/均值/区间/CV + ASCII sparkline'],
+];
+let ch='<table class="grid"><thead><tr><th>Server</th><th>工具</th><th>入参</th><th>返回要点</th></tr></thead><tbody>';
+ch+=CT.map(r=>'<tr><td class="mono" style="color:var(--muted)">'+r[0]+'</td><td class="mono" style="color:var(--gold2)">'+r[1]+'</td><td class="mono">'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>').join('');
+ch+='</tbody></table>';
+document.getElementById('contractcard').innerHTML=ch;
+
+const QUICK='cd mining-daily-agent\nnpm install            <span class="c"># 一次性，1-5 分钟</span>\nnpm run fixture-pdf    <span class="c"># 生成测试用 NI 43-101 PDF</span>\nnpm run validate       <span class="c"># 拉起 3 个 server 跑协议校验</span>\n<b>npm run demo</b>           <span class="c"># 出简报 → agent/output/pilbara-report.md</span>\nnpm run showcase       <span class="c"># 重新生成本页</span>';
+const VAR='node agent/src/index.mjs --query "氢氧化锂 价格走势" -o agent/output/lh.md\nNEWS_MODE=fixture npm run demo        <span class="c"># 全离线</span>\nnode agent/src/index.mjs --query "Greenbushes 锂矿" --pdf "https://…/report.pdf"\nnode agent/src/index.mjs --serve              <span class="c"># 交互式 REPL</span>\nnpm run config:client                   <span class="c"># 生成 Claude Desktop / Cursor 配置</span>';
+document.getElementById('quick').innerHTML='<button class="copy">复制</button><pre>'+QUICK+'</pre>';
+document.getElementById('variants').innerHTML='<button class="copy">复制</button><pre>'+VAR+'</pre>';
+
+document.getElementById('foot').textContent=
+  'mining-daily-agent · 页面生成于 '+new Date(D.builtAt).toISOString().replace('T',' ').slice(0,16)+' UTC · 自包含单文件，可离线打开';
+
+const tabs=document.getElementById('tabs');
+tabs.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...tabs.children].forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));
+  window.scrollTo({top:0,behavior:'smooth'});});
+document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',()=>{
+  const pre=btn.parentElement.querySelector('pre');
+  navigator.clipboard?.writeText(pre.innerText).then(()=>{btn.textContent='已复制';setTimeout(()=>btn.textContent='复制',1400);});
+}));
+</script>
+</body>
+</html>

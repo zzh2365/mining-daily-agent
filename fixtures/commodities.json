@@ -1,0 +1,110 @@
+[
+  {
+    "id": "spodumene_6pct",
+    "name": "Spodumene concentrate SC6.0",
+    "aliases": ["spodumene", "sc6", "sc6.0", "锂辉石", "锂精矿", "li2o"],
+    "unit": "USD/t",
+    "incoterm": "CIF China",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 1120,
+    "vol": 0.017,
+    "notes": "6.0% Li2O spodumene concentrate, the price Pilbara producers realise."
+  },
+  {
+    "id": "lithium_carbonate_cif",
+    "name": "Lithium carbonate (battery grade)",
+    "aliases": ["lithium carbonate", "碳酸锂", "lc"],
+    "unit": "USD/t",
+    "incoterm": "CIF China",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 14200,
+    "vol": 0.02,
+    "notes": "Battery-grade Li2CO3, 99.5% min."
+  },
+  {
+    "id": "lithium_carbonate_domestic",
+    "name": "Lithium carbonate (China domestic)",
+    "aliases": ["碳酸锂国产", "domestic lithium carbonate"],
+    "unit": "CNY/t",
+    "incoterm": "ex-works China",
+    "currency": "CNY",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 102000,
+    "vol": 0.021,
+    "notes": "Wholesale main-contract equivalent, quoted in yuan."
+  },
+  {
+    "id": "lithium_hydroxide_cif",
+    "name": "Lithium hydroxide (battery grade)",
+    "aliases": ["lithium hydroxide", "氢氧化锂", "lh"],
+    "unit": "USD/t",
+    "incoterm": "CIF China",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 13600,
+    "vol": 0.022,
+    "notes": "Battery-grade LiOH.H2O, 56.5% min."
+  },
+  {
+    "id": "nickel_ttf",
+    "name": "Nickel",
+    "aliases": ["nickel", "镍", "ni"],
+    "unit": "USD/t",
+    "incoterm": "LME cash",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 16400,
+    "vol": 0.014,
+    "notes": "Class 1 nickel."
+  },
+  {
+    "id": "copper_lme",
+    "name": "Copper",
+    "aliases": ["copper", "铜", "cu"],
+    "unit": "USD/t",
+    "incoterm": "LME cash-3M",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 8650,
+    "vol": 0.011,
+    "notes": "Grade A cathode."
+  },
+  {
+    "id": "iron_ore_62",
+    "name": "Iron ore 62% Fe",
+    "aliases": ["iron ore", "铁矿石", "62fe", "io"],
+    "unit": "USD/t",
+    "incoterm": "CFR Qingdao",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 114,
+    "vol": 0.013,
+    "notes": "Platts-style benchmark."
+  },
+  {
+    "id": "ndprO_reo",
+    "name": "NdPr oxide (rare earths)",
+    "aliases": ["ndpr", "rare earth", "氧化钕镨", "reo"],
+    "unit": "USD/kg",
+    "incoterm": "China ex-works",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 62,
+    "vol": 0.019,
+    "notes": "Neodymium-praseodymium oxide blend."
+  },
+  {
+    "id": "cobalt_standard",
+    "name": "Cobalt (standard grade)",
+    "aliases": ["cobalt", "钴", "co"],
+    "unit": "USD/t",
+    "incoterm": "EU duty-paid",
+    "currency": "USD",
+    "anchor_date": "2024-01-02",
+    "anchor_price": 26400,
+    "vol": 0.012,
+    "notes": "MB Standard Grade I."
+  }
+]

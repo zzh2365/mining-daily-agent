@@ -1,0 +1,10 @@
+{
+  "name": "mining-news-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.mjs",
+  "bin": {
+    "mining-news-mcp": "src/index.mjs"
+  }
+}

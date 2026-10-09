@@ -1,0 +1,10 @@
+{
+  "name": "mineral-pdf-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.mjs",
+  "bin": {
+    "mineral-pdf-mcp": "src/index.mjs"
+  }
+}

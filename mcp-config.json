@@ -1,0 +1,26 @@
+{
+  "$comment": "Agent-side config. ${VAR:-default} placeholders are resolved by agent/src/mcp.mjs from the environment/.env. For Claude Desktop or Cursor, run `node scripts/gen-mcp-config.mjs` to produce a copy with absolute paths and literal env values.",
+  "mcpServers": {
+    "mining-news-mcp": {
+      "command": "node",
+      "args": ["servers/mining-news-mcp/src/index.mjs"],
+      "env": {
+        "NEWS_MODE": "${NEWS_MODE:-auto}"
+      }
+    },
+    "mineral-pdf-mcp": {
+      "command": "node",
+      "args": ["servers/mineral-pdf-mcp/src/index.mjs"],
+      "env": {
+        "MCP_FIXTURE_DIR": "${MCP_FIXTURE_DIR:-fixtures/pdfs}"
+      }
+    },
+    "lime-price-mcp": {
+      "command": "node",
+      "args": ["servers/lime-price-mcp/src/index.mjs"],
+      "env": {
+        "PRICE_API_URL": "${PRICE_API_URL:-}"
+      }
+    }
+  }
+}
